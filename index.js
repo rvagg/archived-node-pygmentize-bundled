@@ -3,7 +3,7 @@ var spawn = require('child_process').spawn
   , Stream = require('stream').Stream
 
 module.exports = function (lang, format, opts) {
-  var exec = spawn(path.join(__dirname, 'pygments/pygmentize'), [ '-f', format, '-l', lang, '-P', 'encoding=utf8' ])
+  var exec = spawn(path.join(__dirname, 'vendor/pygments/pygmentize'), [ '-f', format, '-l', lang, '-P', 'encoding=utf8' ])
     , stdout = []
     , stderr = ''
 
