@@ -1,5 +1,8 @@
 var assert = require('assert')
-  , pygments = require('./')
+  , pygments = require('../')
+  , fs = require('fs')
+  , Stream = require('stream').Stream
+  , streamEqual = require('stream-equal')
 
   , cases = [
         {
@@ -17,9 +20,25 @@ var assert = require('assert')
     ]
 
 cases.forEach(function (c) {
-  pygments(c.lang, c.format, c.input, function (err, result) {
+  pygments(c.lang, c.format).fromString(c.input, function (err, result) {
     assert.equal(err, null)
     result = result.toString().replace(/\n/g, '')
     assert.equal(result, c.output)
   })
+})
+
+var fileIn = fs.createReadStream(__dirname + '/fixtures/active_model.rb');
+var fileOut = fs.createWriteStream(__dirname + '/fixtures/active_model.tmp', { flags: 'w+', encoding: null, mode: 0666 });
+
+fileIn.pipe(pygments("rb", "html").fromStream()).pipe(fileOut);
+
+fileOut.on("close", function() {
+  var expectedResult = fs.createReadStream(__dirname + '/fixtures/active_model.html');
+  var result = fs.createReadStream(__dirname + '/fixtures/active_model.tmp');
+
+  streamEqual(expectedResult, result, function(err, equal) {
+    if(err) throw err;
+    assert.equal(equal, true)
+  });
+  
 })
