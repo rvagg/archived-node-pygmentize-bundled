@@ -18,11 +18,11 @@
       , "stream"
     ]
   , "authors": [
-        "Rod Vagg @rvagg <rod@vagg.org> (https://github.com/rvagg)",
-        "Cyril Rohr @crohr (https://github.com/crohr)"
+        "Rod Vagg @rvagg <rod@vagg.org> (https://github.com/rvagg)"
+      , "Cyril Rohr @crohr (https://github.com/crohr)"
     ]
   , "license": "MIT"
   , "devDependencies": {
-    "stream-equal": ">= 0.0.1"
-  }
+      "stream-equal": ">= 0.0.1"
+    }
 }

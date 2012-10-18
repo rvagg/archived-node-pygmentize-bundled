@@ -1,18 +1,35 @@
 # Pygmentize (Bundled)
 
-A simple wrapper around Python's Pygments code formatter, with Pygments
-bundled.
+A simple wrapper around Python's Pygments code formatter, with Pygments bundled.
 
-This fork of [rvagg's original code](https://github.com/rvagg/node-pygmentize-bundled) implements a streaming API so that you can syntax highlight from a stream.
+Available as a simple *String-in, Buffer-out* interface and also as a *read/write-Stream* interface.
 
-Similar to [pksunkara's pygments.js](https://github.com/pksunkara/pygments.js) but this comes bundled with Pygments so it doesn't need to be installed on your system, you just need to have Python.
+
+## API
+
+**pygmentize(options, code, callback)**
+
+Pygmentize a given `code` string and return it as a Buffer to the `callback` Function.
+
+* `options` contains options to be passed to Pygments. Currently only `"lang"` and `"format"` are supported.
+* `code` is a String to be formatted.
+* `callback` is a Function, called when complete. The first argument will be an `error` object/string if there was a problem and the second argument will be a Buffer containing your formatted code.
+
+**pygmentize(options)**
+
+When you only supply the `options` argument, it will return a read/write Stream that you can pipe to and from to format your code.
+
+* `options` contains options to be passed to Pygments. Currently only `"lang"` and `"format"` are supported.
+
+
+## Examples
 
 The string interface is very simple:
 
 ```js
 var pygmentize = require('pygmentize-bundled')
 
-pygmentize('js', 'html').fromString('var a = "b";', function (err, result) {
+pygmentize({ lang: 'js', format: 'html'}, 'var a = "b";', function (err, result) {
   console.log(result.toString())
 })
 ```
@@ -29,26 +46,26 @@ Results in:
 </pre></div>
 ```
 
-A streaming API is also available:
+A streaming API is also available. Simply omit the `code` and `callback` arguments:
 
 ```js
 var pygmentize = require('pygmentize-bundled')
 
 process.stdin.pipe(
-  pygmentize('js', 'html').fromStream()
+  pygmentize({ lang: 'js', format: 'html' })
 ).pipe(process.stdout);
 ```
 
-## API
-
-**pygmentize(lang, format).fromString(code, callback)**
-
-**pygmentize(lang, format).fromStream()**
-
 Refer to the [Pygments documentation](http://pygments.org/docs/). For supported languages, see the list of [lexers](http://pygments.org/docs/lexers/), for supported formatted, see the list of [formatters](http://pygments.org/docs/formatters/).
 
-Licence & copyright
--------------------
+
+## Contributors
+
+* [Rod Vagg](https://github.com/rvagg)
+* [Cyril Rohr](https://github.com/crohr)
+
+
+## Licence & copyright
 
 Pygments (Bundled) is Copyright (c) 2012 Rod Vagg <@rvagg> and licenced under the MIT licence. All rights not explicitly granted in the MIT license are reserved. See the included LICENSE file for more details.
 
