@@ -2,6 +2,7 @@ var assert = require('assert')
   , pygments = require('../')
   , fs = require('fs')
   , streamEqual = require('stream-equal')
+  , timeout
 
   , cases = [
         {
@@ -23,6 +24,7 @@ cases.forEach(function (c) {
     assert.equal(err, null)
     result = result.toString().replace(/\n/g, '')
     assert.equal(result, c.output)
+    clearTimeout(timeout)
   })
 })
 
@@ -40,3 +42,7 @@ fileOut.on("close", function() {
     assert.equal(equal, true)
   })
 })
+
+timeout = setTimeout(function () {
+  assert(false, 'Callback not called!')
+}, 500)

@@ -1,6 +1,6 @@
 {
     "name": "pygmentize-bundled"
-  , "version": "1.0.0"
+  , "version": "1.0.1"
   , "description": "A simple wrapper around Python's Pygments code formatter, with Pygments bundled"
   , "main": "index.js"
   , "scripts": {

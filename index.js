@@ -9,6 +9,20 @@ var spawn           = require('child_process').spawn
   , fromString = function(exec, code, callback) {
       var stdout = []
         , stderr = ''
+        , ec     = 0
+        , exitClose = function () {
+            if (++ec < 2) return
+
+            var buf = new Buffer(stdout.reduce(function (p, c) { return p + c.length }, 0))
+              , i = 0
+
+            stdout.forEach(function(s) {
+              s.copy(buf, i, 0, s.length)
+              i += s.length
+            })
+
+            callback(null, buf)
+          }
 
       exec.stdout.on('data', function(data) {
         stdout.push(data)
@@ -19,18 +33,13 @@ var spawn           = require('child_process').spawn
       })
 
       exec.on('exit', function (code) {
-        if (code !== 0) return callback('Error: ' + stderr)
-
-        var buf = new Buffer(stdout.reduce(function (p, c) { return p + c.length }, 0))
-          , i = 0
-
-        stdout.forEach(function(s) {
-          s.copy(buf, i, 0, s.length)
-          i += s.length
-        })
-
-        callback(null, buf)
+        if (code !== 0) {
+          ec = -1
+          return callback('Error: ' + stderr)
+        }
+        exitClose()
       })
+      exec.on('close', exitClose)
 
       exec.stdin.write(code)
       exec.stdin.end()
