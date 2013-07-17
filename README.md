@@ -63,7 +63,7 @@ Refer to the [Pygments documentation](http://pygments.org/docs/). For supported 
 
 * [Rod Vagg](https://github.com/rvagg)
 * [Cyril Rohr](https://github.com/crohr)
-
+* [Ahmed Fasih](https://github.com/fasiha)
 
 ## Licence & copyright
 
