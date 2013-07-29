@@ -21,6 +21,7 @@
         "Rod Vagg @rvagg <rod@vagg.org> (https://github.com/rvagg)"
       , "Cyril Rohr @crohr (https://github.com/crohr)"
       , "Ahmed Fasih (https://github.com/fasiha)"
+      , "Scott Walkinshaw (https://github.com/swalkinshaw)"
     ]
   , "license": "MIT"
   , "devDependencies": {
