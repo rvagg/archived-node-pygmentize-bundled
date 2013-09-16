@@ -6,7 +6,7 @@ var spawn           = require('child_process').spawn
   , defaultLang     = 'js'
   , defaultEncoding = 'utf8'
 
-  , fromString = function(exec, code, callback) {
+  , fromString = function (exec, code, callback) {
       var stdout = []
         , stderr = ''
         , ec     = 0
@@ -16,7 +16,7 @@ var spawn           = require('child_process').spawn
             var buf = new Buffer(stdout.reduce(function (p, c) { return p + c.length }, 0))
               , i = 0
 
-            stdout.forEach(function(s) {
+            stdout.forEach(function (s) {
               s.copy(buf, i, 0, s.length)
               i += s.length
             })
@@ -24,7 +24,7 @@ var spawn           = require('child_process').spawn
             callback(null, buf)
           }
 
-      exec.stdout.on('data', function(data) {
+      exec.stdout.on('data', function (data) {
         stdout.push(data)
       })
 
@@ -45,14 +45,14 @@ var spawn           = require('child_process').spawn
       exec.stdin.end()
     }
 
-  , fromStream = function(exec) {
+  , fromStream = function (exec) {
       var stream = new Stream()
         , stderr = ''
 
       stream.writable = true
       stream.readable = true
 
-      exec.stdout.on('data', function(data) {
+      exec.stdout.on('data', function (data) {
         stream.emit('data', data)
       })
 
@@ -68,16 +68,16 @@ var spawn           = require('child_process').spawn
         }
       })
 
-      stream.write = function(data) {
+      stream.write = function (data) {
         exec.stdin.write(data)
       }
 
-      stream.end = function() {
+      stream.end = function () {
         exec.stdin.end()
       }
 
-      stream.destroy = function() {
-        stream.emit("close")
+      stream.destroy = function () {
+        stream.emit('close')
       }
 
       return stream
@@ -98,7 +98,10 @@ var spawn           = require('child_process').spawn
         }
       }
 
-      var exec = spawn("python", [path.join(__dirname, 'vendor/pygments/pygmentize')].concat(execArgs))
+      var exec = spawn(
+          typeof options.python == 'string' ? options.python : 'python'
+        , [ path.join(__dirname, 'vendor/pygments/pygmentize') ].concat(execArgs)
+      )
 
       return typeof code == 'string' && typeof callback == 'function'
         ? fromString(exec, code, callback)
