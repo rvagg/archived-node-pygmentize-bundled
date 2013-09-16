@@ -5,7 +5,7 @@
 
     Lexers for various shells.
 
-    :copyright: Copyright 2006-2012 by the Pygments team, see AUTHORS.
+    :copyright: Copyright 2006-2013 by the Pygments team, see AUTHORS.
     :license: BSD, see LICENSE for details.
 """
 
@@ -18,7 +18,7 @@ from pygments.util import shebang_matches
 
 
 __all__ = ['BashLexer', 'BashSessionLexer', 'TcshLexer', 'BatchLexer',
-           'PowerShellLexer']
+           'PowerShellLexer', 'ShellSessionLexer']
 
 line_re  = re.compile('.*?\n')
 
@@ -67,9 +67,11 @@ class BashLexer(RegexLexer):
         'data': [
             (r'(?s)\$?"(\\\\|\\[0-7]+|\\.|[^"\\])*"', String.Double),
             (r"(?s)\$?'(\\\\|\\[0-7]+|\\.|[^'\\])*'", String.Single),
-            (r';', Text),
+            (r';', Punctuation),
+            (r'&', Punctuation),
+            (r'\|', Punctuation),
             (r'\s+', Text),
-            (r'[^=\s\[\]{}()$"\'`\\<]+', Text),
+            (r'[^=\s\[\]{}()$"\'`\\<&|;]+', Text),
             (r'\d+(?= |\Z)', Number),
             (r'\$#?(\w+|.)', Name.Variable),
             (r'<', Text),
@@ -99,7 +101,10 @@ class BashLexer(RegexLexer):
     }
 
     def analyse_text(text):
-        return shebang_matches(text, r'(ba|z|)sh')
+        if shebang_matches(text, r'(ba|z|)sh'):
+            return 1
+        if text.startswith('$ '):
+            return 0.2
 
 
 class BashSessionLexer(Lexer):
@@ -153,6 +158,52 @@ class BashSessionLexer(Lexer):
                 yield pos+i, t, v
 
 
+class ShellSessionLexer(Lexer):
+    """
+    Lexer for shell sessions that works with different command prompts
+
+    *New in Pygments 1.6.*
+    """
+
+    name = 'Shell Session'
+    aliases = ['shell-session']
+    filenames = ['*.shell-session']
+    mimetypes = ['application/x-sh-session']
+
+    def get_tokens_unprocessed(self, text):
+        bashlexer = BashLexer(**self.options)
+
+        pos = 0
+        curcode = ''
+        insertions = []
+
+        for match in line_re.finditer(text):
+            line = match.group()
+            m = re.match(r'^((?:\[?\S+@[^$#%]+)[$#%])(.*\n?)', line)
+            if m:
+                # To support output lexers (say diff output), the output
+                # needs to be broken by prompts whenever the output lexer
+                # changes.
+                if not insertions:
+                    pos = match.start()
+
+                insertions.append((len(curcode),
+                                   [(0, Generic.Prompt, m.group(1))]))
+                curcode += m.group(2)
+            else:
+                if insertions:
+                    toks = bashlexer.get_tokens_unprocessed(curcode)
+                    for i, t, v in do_insertions(insertions, toks):
+                        yield pos+i, t, v
+                yield match.start(), Generic.Output, line
+                insertions = []
+                curcode = ''
+        if insertions:
+            for i, t, v in do_insertions(insertions,
+                                         bashlexer.get_tokens_unprocessed(curcode)):
+                yield pos+i, t, v
+
+
 class BatchLexer(RegexLexer):
     """
     Lexer for the DOS/Windows Batch file format.
@@ -160,7 +211,7 @@ class BatchLexer(RegexLexer):
     *New in Pygments 0.7.*
     """
     name = 'Batchfile'
-    aliases = ['bat']
+    aliases = ['bat', 'dosbatch', 'winbatch']
     filenames = ['*.bat', '*.cmd']
     mimetypes = ['application/x-dos-batch']
 
@@ -283,8 +334,8 @@ class PowerShellLexer(RegexLexer):
     *New in Pygments 1.5.*
     """
     name = 'PowerShell'
-    aliases = ['powershell', 'posh', 'ps1']
-    filenames = ['*.ps1']
+    aliases = ['powershell', 'posh', 'ps1', 'psm1']
+    filenames = ['*.ps1','*.psm1']
     mimetypes = ['text/x-powershell']
 
     flags = re.DOTALL | re.IGNORECASE | re.MULTILINE
@@ -296,7 +347,7 @@ class PowerShellLexer(RegexLexer):
         'dynamicparam do default continue cmdletbinding break begin alias \\? '
         '% #script #private #local #global mandatory parametersetname position '
         'valuefrompipeline valuefrompipelinebypropertyname '
-        'valuefromremainingarguments helpmessage try catch').split()
+        'valuefromremainingarguments helpmessage try catch throw').split()
 
     operators = (
         'and as band bnot bor bxor casesensitive ccontains ceq cge cgt cle '
@@ -322,12 +373,15 @@ class PowerShellLexer(RegexLexer):
 
     tokens = {
         'root': [
+            # we need to count pairs of parentheses for correct highlight
+            # of '$(...)' blocks in strings
+            (r'\(', Punctuation, 'child'),
             (r'\s+', Text),
             (r'^(\s*#[#\s]*)(\.(?:%s))([^\n]*$)' % '|'.join(commenthelp),
              bygroups(Comment, String.Doc, Comment)),
             (r'#[^\n]*?$', Comment),
             (r'(&lt;|<)#', Comment.Multiline, 'multline'),
-            (r'@"\n.*?\n"@', String.Heredoc),
+            (r'@"\n', String.Heredoc, 'heredoc-double'),
             (r"@'\n.*?\n'@", String.Heredoc),
             # escaped syntax
             (r'`[\'"$@-]', Punctuation),
@@ -341,7 +395,11 @@ class PowerShellLexer(RegexLexer):
             (r'\[[a-z_\[][a-z0-9_. `,\[\]]*\]', Name.Constant),  # .net [type]s
             (r'-[a-z_][a-z0-9_]*', Name),
             (r'\w+', Name),
-            (r'[.,{}\[\]$()=+*/\\&%!~?^`|<>-]', Punctuation),
+            (r'[.,;@{}\[\]$()=+*/\\&%!~?^`|<>-]|::', Punctuation),
+        ],
+        'child': [
+            (r'\)', Punctuation, '#pop'),
+            include('root'),
         ],
         'multline': [
             (r'[^#&.]+', Comment.Multiline),
@@ -350,15 +408,17 @@ class PowerShellLexer(RegexLexer):
             (r'[#&.]', Comment.Multiline),
         ],
         'string': [
+            (r"`[0abfnrtv'\"\$]", String.Escape),
             (r'[^$`"]+', String.Double),
-            (r'\$\(', String.Interpol, 'interpol'),
-            (r'`"|""', String.Double),
+            (r'\$\(', Punctuation, 'child'),
+            (r'""', String.Double),
             (r'[`$]', String.Double),
             (r'"', String.Double, '#pop'),
         ],
-        'interpol': [
-            (r'[^$)]+', String.Interpol),
-            (r'\$\(', String.Interpol, '#push'),
-            (r'\)', String.Interpol, '#pop'),
+        'heredoc-double': [
+            (r'\n"@', String.Heredoc, '#pop'),
+            (r'\$\(', Punctuation, 'child'),
+            (r'[^@\n]+"]', String.Heredoc),
+            (r".", String.Heredoc),
         ]
     }

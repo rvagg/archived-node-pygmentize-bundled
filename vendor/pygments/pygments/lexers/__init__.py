@@ -5,7 +5,7 @@
 
     Pygments lexers.
 
-    :copyright: Copyright 2006-2012 by the Pygments team, see AUTHORS.
+    :copyright: Copyright 2006-2013 by the Pygments team, see AUTHORS.
     :license: BSD, see LICENSE for details.
 """
 
@@ -15,6 +15,7 @@ import fnmatch
 from os.path import basename
 
 from pygments.lexers._mapping import LEXERS
+from pygments.modeline import get_filetype_from_buffer
 from pygments.plugin import find_plugin_lexers
 from pygments.util import ClassNotFound, bytes
 
@@ -113,7 +114,7 @@ def get_lexer_for_filename(_fn, code=None, **options):
         # to find lexers which need it overridden.
         if code:
             return cls.analyse_text(code) + bonus
-        return bonus
+        return cls.priority + bonus
 
     if matches:
         matches.sort(key=get_rating)
@@ -197,6 +198,16 @@ def guess_lexer(_text, **options):
     """
     Guess a lexer by strong distinctions in the text (eg, shebang).
     """
+
+    # try to get a vim modeline first
+    ft = get_filetype_from_buffer(_text)
+
+    if ft is not None:
+        try:
+            return get_lexer_by_name(ft, **options)
+        except ClassNotFound:
+            pass
+
     best_lexer = [0.0, None]
     for lexer in _iter_lexerclasses():
         rv = lexer.analyse_text(_text)

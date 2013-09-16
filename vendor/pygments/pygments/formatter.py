@@ -5,7 +5,7 @@
 
     Base formatter class.
 
-    :copyright: Copyright 2006-2012 by the Pygments team, see AUTHORS.
+    :copyright: Copyright 2006-2013 by the Pygments team, see AUTHORS.
     :license: BSD, see LICENSE for details.
 """
 
@@ -68,6 +68,9 @@ class Formatter(object):
         self.full  = get_bool_opt(options, 'full', False)
         self.title = options.get('title', '')
         self.encoding = options.get('encoding', None) or None
+        if self.encoding == 'guess':
+            # can happen for pygmentize -O encoding=guess
+            self.encoding = 'utf-8'
         self.encoding = options.get('outencoding', None) or self.encoding
         self.options = options
 

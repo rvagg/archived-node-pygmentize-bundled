@@ -3,7 +3,7 @@
     Pygments basic API tests
     ~~~~~~~~~~~~~~~~~~~~~~~~
 
-    :copyright: Copyright 2006-2012 by the Pygments team, see AUTHORS.
+    :copyright: Copyright 2006-2013 by the Pygments team, see AUTHORS.
     :license: BSD, see LICENSE for details.
 """
 
@@ -92,8 +92,9 @@ def test_lexer_options():
         if cls.__name__ not in (
             'PythonConsoleLexer', 'RConsoleLexer', 'RubyConsoleLexer',
             'SqliteConsoleLexer', 'MatlabSessionLexer', 'ErlangShellLexer',
-            'BashSessionLexer', 'LiterateHaskellLexer', 'PostgresConsoleLexer',
-            'ElixirConsoleLexer', 'JuliaConsoleLexer'):
+            'BashSessionLexer', 'LiterateHaskellLexer', 'LiterateAgdaLexer',
+            'PostgresConsoleLexer', 'ElixirConsoleLexer', 'JuliaConsoleLexer',
+            'RobotFrameworkLexer', 'DylanConsoleLexer', 'ShellSessionLexer'):
             inst = cls(ensurenl=False)
             ensure(inst.get_tokens('a\nb'), 'a\nb')
             inst = cls(ensurenl=False, stripall=True)
