@@ -7,14 +7,11 @@ const spawn           = require('child_process').spawn
     , bl              = require('bl')
     , through2        = require('through2')
 
-    , confDir         = path.join(process.env.HOME || process.env.USERPROFILE, '.config')
-    , confFile        = path.join(confDir, 'node-pygmentize-bundled.json')
-
     , defaultFormat   = 'html'
     , defaultLang     = 'js'
     , defaultEncoding = 'utf8'
 
-var pythonVersions
+var pythonVersions = {}
 
 function fromString (child, code, callback) {
   var stdout = bl()
@@ -33,7 +30,7 @@ function fromString (child, code, callback) {
   child.on('exit', function (code) {
     if (code !== 0) {
       ec = -1
-      return callback('Error: ' + stderr)
+      return callback(new Error('Error calling `pygmentize`: ' + stderr.toString()))
     }
     exitClose()
   })
@@ -117,14 +114,6 @@ function spawnPygmentize (options, execArgs, callback) {
 }
 
 function pythonVersion (python, callback) {
-  if (!pythonVersions) {
-    try {
-      pythonVersions = require(confFile)
-    } catch (e) {}
-    if (typeof pythonVersions != 'object')
-      pythonVersions = {}
-  }
-
   if (pythonVersions[python])
     return callback(null, pythonVersions[python])
 
@@ -134,12 +123,10 @@ function pythonVersion (python, callback) {
 
     var m = stderr.toString().match(/^Python (\d)[.\d]+/i)
     if (!m)
-      return callback(new Error('cannot determine Python version: [' + stderr.toString() + ']'))
+      return callback(new Error('Cannot determine Python version: [' + stderr.toString() + ']'))
 
     pythonVersions[python] = +m[1]
 
-    mkdirp.sync(confDir)
-    fs.writeFileSync(confFile, JSON.stringify(pythonVersions), 'utf8')
     return callback(null, +m[1])
   })
 }
