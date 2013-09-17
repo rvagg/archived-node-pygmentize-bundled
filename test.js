@@ -19,7 +19,7 @@ function simpleStringConversionTest (python) {
               , format: 'console'
               , input: 'bool a = true;'
               , output: '\u001b[36mbool\u001b[39;49;00m \u001b[39;49;00ma\u001b[39;49;00m '
-                  + '\u001b[39;49;00m=\u001b[39;49;00m \u001b[39;49;00m\u001b[34mtrue\u001b[39;49;00m;\u001b[39;49;00m'
+                  + '\u001b[39;49;00m=\u001b[39;49;00m \u001b[39;49;00m\u001b[36mtrue\u001b[39;49;00m;\u001b[39;49;00m'
             }
           , {
                 lang: 'php'
@@ -37,7 +37,7 @@ function simpleStringConversionTest (python) {
             }
         ]
 
-    t.plan(cases.length * 2)
+    t.plan(cases.length * 3)
 
     cases.forEach(function (c) {
       pygments(
@@ -50,6 +50,7 @@ function simpleStringConversionTest (python) {
         , c.input
         , function (err, result) {
             t.equal(err, null)
+            t.ok(Buffer.isBuffer(result), 'isBuffer')
             result = result.toString().replace(/\n/g, '')
             t.equal(result, c.output)
           }

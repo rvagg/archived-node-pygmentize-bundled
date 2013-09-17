@@ -1,9 +1,12 @@
 # Pygmentize (Bundled)
 
-A simple wrapper around Python's Pygments code formatter, with Pygments bundled.
+**Python's Pygments code formatter, for Node.js, distributed with Pygments**
 
-Available as a simple *String-in, Buffer-out* interface and also as a *read/write-Stream* interface.
+[![NPM](https://nodei.co/npm/pygmentize-bundled.png?downloads=true&stars=true)](https://nodei.co/npm/pygmentize-bundled/) [![NPM](https://nodei.co/npm-dl/pygmentize-bundled.png?months=6)](https://nodei.co/npm/pygmentize-bundled/)
 
+Can be used as either a *String-in, Buffer-out*, or as a Duplex stream.
+
+Compatible with both Python v2 and v3.
 
 ## API
 
@@ -17,19 +20,18 @@ Pygmentize a given `code` string and return it as a Buffer to the `callback` Fun
 
 **pygmentize(options)**
 
-When you only supply the `options` argument, it will return a read/write Stream that you can pipe to and from to format your code.
+When you only supply the `options` argument, it will return a Duplex stream that you can pipe to and from to format your code.
 
 * `options` contains options to be passed to Pygments (see [Options](#options)).
-
 
 ## Options
 
 Language/lexer, formatter, and their options are currently supported. Filters are not supported yet.
 
-* `lang`: source language/lexer name - `string`
-* `format`: output formatter name - `string`
-* `options`: lexer and formatter options - `object`
-
+* `lang`: source language/lexer name - `String`
+* `format`: output formatter name - `String`
+* `python`: the full path to the `python` command on the current system, defaults to `'python'` - `String`
+* `options`: lexer and formatter options, each key/value pair is passed through to `pygmentize` with `-P` - `Object`
 
 ## Examples
 
@@ -65,18 +67,17 @@ pygmentize({ lang: 'php', format: 'html', options: { startinline: 1 } }, 'var a 
 })
 ```
 
-A streaming API is also available. Simply omit the `code` and `callback` arguments:
+A duplex streaming API is also available. Simply omit the `code` and `callback` arguments:
 
 ```js
 var pygmentize = require('pygmentize-bundled')
 
-process.stdin.pipe(
-  pygmentize({ lang: 'js', format: 'html' })
-).pipe(process.stdout);
+process.stdin
+  .pipe(pygmentize({ lang: 'js', format: 'html' }))
+  .pipe(process.stdout);
 ```
 
 Refer to the [Pygments documentation](http://pygments.org/docs/). For supported languages, see the list of [lexers](http://pygments.org/docs/lexers/), for supported formatted, see the list of [formatters](http://pygments.org/docs/formatters/).
-
 
 ## Contributors
 
