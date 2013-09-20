@@ -85,6 +85,7 @@ Refer to the [Pygments documentation](http://pygments.org/docs/). For supported 
 * [Cyril Rohr](https://github.com/crohr)
 * [Ahmed Fasih](https://github.com/fasiha)
 * [Scott Walkinshaw](https://github.com/swalkinshaw)
+* [Chris Wren](https://github.com/ChrisWren)
 
 ## Licence & copyright
 

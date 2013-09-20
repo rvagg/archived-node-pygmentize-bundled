@@ -22,6 +22,7 @@
       , "Cyril Rohr @crohr (https://github.com/crohr)"
       , "Ahmed Fasih (https://github.com/fasiha)"
       , "Scott Walkinshaw (https://github.com/swalkinshaw)"
+      , "Chris Wren (https://github.com/ChrisWren)"
     ]
   , "license"         : "MIT"
   , "dependencies"    : {
