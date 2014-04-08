@@ -123,6 +123,8 @@ function pythonVersion (python, callback) {
 
     var m = stderr.toString().match(/^Python (\d)[.\d]+/i)
     if (!m)
+      m = stdout.toString().match(/^Python (\d)[.\d]+/i)
+    if (!m)
       return callback(new Error('Cannot determine Python version: [' + stderr.toString() + ']'))
 
     pythonVersions[python] = +m[1]
