@@ -5,7 +5,7 @@
 
     Base lexer classes.
 
-    :copyright: Copyright 2006-2013 by the Pygments team, see AUTHORS.
+    :copyright: Copyright 2006-2014 by the Pygments team, see AUTHORS.
     :license: BSD, see LICENSE for details.
 """
 import re, itertools
@@ -14,19 +14,18 @@ from pygments.filter import apply_filters, Filter
 from pygments.filters import get_filter_by_name
 from pygments.token import Error, Text, Other, _TokenType
 from pygments.util import get_bool_opt, get_int_opt, get_list_opt, \
-     make_analysator
-import collections
+     make_analysator, text_type, add_metaclass, iteritems
 
 
 __all__ = ['Lexer', 'RegexLexer', 'ExtendedRegexLexer', 'DelegatingLexer',
-           'LexerContext', 'include', 'inherit', 'bygroups', 'using', 'this']
+           'LexerContext', 'include', 'inherit', 'bygroups', 'using', 'this', 'default']
 
 
-_encoding_map = [('\xef\xbb\xbf', 'utf-8'),
-                 ('\xff\xfe\0\0', 'utf-32'),
-                 ('\0\0\xfe\xff', 'utf-32be'),
-                 ('\xff\xfe', 'utf-16'),
-                 ('\xfe\xff', 'utf-16be')]
+_encoding_map = [(b'\xef\xbb\xbf', 'utf-8'),
+                 (b'\xff\xfe\0\0', 'utf-32'),
+                 (b'\0\0\xfe\xff', 'utf-32be'),
+                 (b'\xff\xfe', 'utf-16'),
+                 (b'\xfe\xff', 'utf-16be')]
 
 _default_analyse = staticmethod(lambda x: 0.0)
 
@@ -43,7 +42,8 @@ class LexerMeta(type):
         return type.__new__(cls, name, bases, d)
 
 
-class Lexer(object, metaclass=LexerMeta):
+@add_metaclass(LexerMeta)
+class Lexer(object):
     """
     Lexer for a specific language.
 
@@ -56,7 +56,9 @@ class Lexer(object, metaclass=LexerMeta):
     ``ensurenl``
         Make sure that the input ends with a newline (default: True).  This
         is required for some lexers that consume input linewise.
-        *New in Pygments 1.3.*
+
+        .. versionadded:: 1.3
+
     ``tabsize``
         If given and greater than 0, expand tabs in the input (default: 0).
     ``encoding``
@@ -135,12 +137,12 @@ class Lexer(object, metaclass=LexerMeta):
         Also preprocess the text, i.e. expand tabs and strip it if
         wanted and applies registered filters.
         """
-        if not isinstance(text, str):
+        if not isinstance(text, text_type):
             if self.encoding == 'guess':
                 try:
                     text = text.decode('utf-8')
-                    if text.startswith('\ufeff'):
-                        text = text[len('\ufeff'):]
+                    if text.startswith(u'\ufeff'):
+                        text = text[len(u'\ufeff'):]
                 except UnicodeDecodeError:
                     text = text.decode('latin1')
             elif self.encoding == 'chardet':
@@ -154,20 +156,21 @@ class Lexer(object, metaclass=LexerMeta):
                 decoded = None
                 for bom, encoding in _encoding_map:
                     if text.startswith(bom):
-                        decoded = str(text[len(bom):], encoding,
-                                          errors='replace')
+                        decoded = text[len(bom):].decode(encoding, 'replace')
                         break
                 # no BOM found, so use chardet
                 if decoded is None:
                     enc = chardet.detect(text[:1024]) # Guess using first 1KB
-                    decoded = str(text, enc.get('encoding') or 'utf-8',
-                                      errors='replace')
+                    decoded = text.decode(enc.get('encoding') or 'utf-8',
+                                          'replace')
                 text = decoded
             else:
                 text = text.decode(self.encoding)
+                if text.startswith(u'\ufeff'):
+                    text = text[len(u'\ufeff'):]
         else:
-            if text.startswith('\ufeff'):
-                text = text[len('\ufeff'):]
+            if text.startswith(u'\ufeff'):
+                text = text[len(u'\ufeff'):]
 
         # text now *is* a unicode string
         text = text.replace('\r\n', '\n')
@@ -191,7 +194,9 @@ class Lexer(object, metaclass=LexerMeta):
 
     def get_tokens_unprocessed(self, text):
         """
-        Return an iterable of (tokentype, value) pairs.
+        Return an iterable of (index, tokentype, value) pairs where "index"
+        is the starting position of the token within the input text.
+
         In subclasses, implement this method as a generator to
         maximize effectiveness.
         """
@@ -378,6 +383,16 @@ def using(_other, **kwargs):
     return callback
 
 
+class default:
+    """
+    Indicates a state or state action (e.g. #pop) to apply.
+    For example default('#pop') is equivalent to ('', Token, '#pop')
+    Note that state tuples may be used as well
+    """
+    def __init__(self, state):
+        self.state = state
+
+
 class RegexLexerMeta(LexerMeta):
     """
     Metaclass for RegexLexer, creates the self._tokens attribute from
@@ -390,7 +405,7 @@ class RegexLexerMeta(LexerMeta):
 
     def _process_token(cls, token):
         """Preprocess the token component of a token definition."""
-        assert type(token) is _TokenType or isinstance(token, collections.Callable), \
+        assert type(token) is _TokenType or callable(token), \
                'token type must be simple type or callable, not %r' % (token,)
         return token
 
@@ -447,6 +462,10 @@ class RegexLexerMeta(LexerMeta):
             if isinstance(tdef, _inherit):
                 # processed already
                 continue
+            if isinstance(tdef, default):
+                new_state = cls._process_new_state(tdef.state, unprocessed, processed)
+                tokens.append((re.compile('').match, None, new_state))
+                continue
 
             assert type(tdef) is tuple, "wrong rule def %r" % tdef
 
@@ -471,7 +490,7 @@ class RegexLexerMeta(LexerMeta):
         """Preprocess a dictionary of token definitions."""
         processed = cls._all_tokens[name] = {}
         tokendefs = tokendefs or cls.tokens[name]
-        for state in list(tokendefs.keys()):
+        for state in list(tokendefs):
             cls._process_state(tokendefs, processed, state)
         return processed
 
@@ -492,7 +511,7 @@ class RegexLexerMeta(LexerMeta):
         for c in itertools.chain((cls,), cls.__mro__):
             toks = c.__dict__.get('tokens', {})
 
-            for state, items in toks.items():
+            for state, items in iteritems(toks):
                 curitems = tokens.get(state)
                 if curitems is None:
                     tokens[state] = items
@@ -532,7 +551,8 @@ class RegexLexerMeta(LexerMeta):
         return type.__call__(cls, *args, **kwds)
 
 
-class RegexLexer(Lexer, metaclass=RegexLexerMeta):
+@add_metaclass(RegexLexerMeta)
+class RegexLexer(Lexer):
     """
     Base for simple stateful regular expression-based lexers.
     Simplifies the lexing process so that you need only
@@ -576,11 +596,12 @@ class RegexLexer(Lexer, metaclass=RegexLexerMeta):
             for rexmatch, action, new_state in statetokens:
                 m = rexmatch(text, pos)
                 if m:
-                    if type(action) is _TokenType:
-                        yield pos, action, m.group()
-                    else:
-                        for item in action(self, m):
-                            yield item
+                    if action is not None:
+                        if type(action) is _TokenType:
+                            yield pos, action, m.group()
+                        else:
+                            for item in action(self, m):
+                                yield item
                     pos = m.end()
                     if new_state is not None:
                         # state transition
@@ -607,7 +628,7 @@ class RegexLexer(Lexer, metaclass=RegexLexerMeta):
                         # at EOL, reset state to "root"
                         statestack = ['root']
                         statetokens = tokendefs['root']
-                        yield pos, Text, '\n'
+                        yield pos, Text, u'\n'
                         pos += 1
                         continue
                     yield pos, Error, text[pos]
@@ -654,15 +675,16 @@ class ExtendedRegexLexer(RegexLexer):
             for rexmatch, action, new_state in statetokens:
                 m = rexmatch(text, ctx.pos, ctx.end)
                 if m:
-                    if type(action) is _TokenType:
-                        yield ctx.pos, action, m.group()
-                        ctx.pos = m.end()
-                    else:
-                        for item in action(self, m, ctx):
-                            yield item
-                        if not new_state:
-                            # altered the state stack?
-                            statetokens = tokendefs[ctx.stack[-1]]
+                    if action is not None:
+                        if type(action) is _TokenType:
+                            yield ctx.pos, action, m.group()
+                            ctx.pos = m.end()
+                        else:
+                            for item in action(self, m, ctx):
+                                yield item
+                            if not new_state:
+                                # altered the state stack?
+                                statetokens = tokendefs[ctx.stack[-1]]
                     # CAUTION: callback must set ctx.pos!
                     if new_state is not None:
                         # state transition
@@ -671,7 +693,7 @@ class ExtendedRegexLexer(RegexLexer):
                                 if state == '#pop':
                                     ctx.stack.pop()
                                 elif state == '#push':
-                                    ctx.stack.append(statestack[-1])
+                                    ctx.stack.append(ctx.stack[-1])
                                 else:
                                     ctx.stack.append(state)
                         elif isinstance(new_state, int):
@@ -691,7 +713,7 @@ class ExtendedRegexLexer(RegexLexer):
                         # at EOL, reset state to "root"
                         ctx.stack = ['root']
                         statetokens = tokendefs['root']
-                        yield ctx.pos, Text, '\n'
+                        yield ctx.pos, Text, u'\n'
                         ctx.pos += 1
                         continue
                     yield ctx.pos, Error, text[ctx.pos]

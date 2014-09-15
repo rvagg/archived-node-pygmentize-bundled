@@ -5,11 +5,12 @@
 
     Basic style object.
 
-    :copyright: Copyright 2006-2013 by the Pygments team, see AUTHORS.
+    :copyright: Copyright 2006-2014 by the Pygments team, see AUTHORS.
     :license: BSD, see LICENSE for details.
 """
 
 from pygments.token import Token, STANDARD_TYPES
+from pygments.util import add_metaclass
 
 
 class StyleMeta(type):
@@ -104,7 +105,10 @@ class StyleMeta(type):
         return len(cls._styles)
 
 
-class Style(object, metaclass=StyleMeta):
+@add_metaclass(StyleMeta)
+class Style(object):
+
+    #: overall background color (``None`` means transparent)
     background_color = '#ffffff'
 
     #: highlight background color
