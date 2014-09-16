@@ -2,7 +2,7 @@
 
 **Python's Pygments code formatter, for Node.js, distributed with Pygments**
 
-[![NPM](https://nodei.co/npm/pygmentize-bundled.png?downloads=true&stars=true)](https://nodei.co/npm/pygmentize-bundled/) [![NPM](https://nodei.co/npm-dl/pygmentize-bundled.png?months=6)](https://nodei.co/npm/pygmentize-bundled/)
+[![NPM](https://nodei.co/npm/pygmentize-bundled.png?downloads=true&stars=true&downloadRank=true)](https://nodei.co/npm/pygmentize-bundled/) [![NPM](https://nodei.co/npm-dl/pygmentize-bundled.png?months=6&height=3)](https://nodei.co/npm/pygmentize-bundled/)
 
 Can be used as either a *String-in, Buffer-out*, or as a Duplex stream.
 
