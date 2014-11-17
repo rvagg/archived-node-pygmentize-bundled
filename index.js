@@ -1,9 +1,6 @@
 const spawn           = require('child_process').spawn
     , exec            = require('child_process').exec
     , path            = require('path')
-    , fs              = require('fs')
-    , PassThrough     = require('readable-stream/passthrough')
-    , mkdirp          = require('mkdirp')
     , bl              = require('bl')
     , through2        = require('through2')
 
@@ -11,7 +8,9 @@ const spawn           = require('child_process').spawn
     , defaultLang     = 'js'
     , defaultEncoding = 'utf8'
 
+
 var pythonVersions = {}
+
 
 function fromString (child, code, callback) {
   var stdout = bl()
@@ -57,6 +56,7 @@ function fromStream (retStream, intStream, child) {
   })
 }
 
+
 function pygmentize (options, code, callback) {
   options = options || {}
 
@@ -76,10 +76,15 @@ function pygmentize (options, code, callback) {
   }
 
   spawnPygmentize(options, execArgs, function (err, child) {
-    if (err)
-      return callback(err)
-    if (toString)
+    if (toString) {
+      if (err)
+        return callback(err)
       return fromString(child, code, callback)
+    }
+
+    // else stream
+    if (err)
+      return retStream.emit('error', err)
     fromStream(retStream, intStream, child)
   })
 
@@ -92,6 +97,7 @@ function pygmentize (options, code, callback) {
 
   return retStream
 }
+
 
 function spawnPygmentize (options, execArgs, callback) {
   var python = typeof options.python == 'string' ? options.python : 'python'
@@ -113,6 +119,7 @@ function spawnPygmentize (options, execArgs, callback) {
   })
 }
 
+
 function pythonVersion (python, callback) {
   if (pythonVersions[python])
     return callback(null, pythonVersions[python])
@@ -132,5 +139,6 @@ function pythonVersion (python, callback) {
     return callback(null, +m[1])
   })
 }
+
 
 module.exports = pygmentize
