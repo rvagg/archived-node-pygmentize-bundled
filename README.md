@@ -8,6 +8,8 @@ Can be used as either a *String-in, Buffer-out*, or as a Duplex stream.
 
 Compatible with both Python v2 and v3.
 
+**Note**: this library makes use of a child process which calls Python to invoke Pygments. This can cause performance problems where a large number of code blocks are being separately formatted. Consider using **[pygmentize-bundled-cached](https://github.com/rvagg/pygmentize-bundled-cached)**, an API-compatible wrapper for this library that keeps an on-disk cache of formatted code samples which will result in significantly faster formats when repeatedly formatting the same blocks of code.
+
 ## API
 
 **pygmentize(options, code, callback)**

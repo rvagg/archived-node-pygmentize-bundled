@@ -1,6 +1,6 @@
 {
   "name": "pygmentize-bundled",
-  "version": "2.2.0",
+  "version": "2.3.0-pre1",
   "description": "A simple wrapper around Python's Pygments code formatter, with Pygments bundled",
   "main": "index.js",
   "scripts": {
@@ -26,13 +26,11 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "mkdirp": "~0.3.5",
-    "readable-stream": "~1.0.17",
     "bl": "~0.4.1",
     "through2": "~0.2.1"
   },
   "devDependencies": {
-    "stream-equal": ">= 0.0.1",
-    "tape": "*"
+    "stream-equal": "~0.1.5",
+    "tape": "~3.0.3"
   }
 }
