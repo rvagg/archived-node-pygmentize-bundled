@@ -10,6 +10,8 @@ Compatible with both Python v2 and v3.
 
 **Note**: this library makes use of a child process which calls Python to invoke Pygments. This can cause performance problems where a large number of code blocks are being separately formatted. Consider using **[pygmentize-bundled-cached](https://github.com/rvagg/pygmentize-bundled-cached)**, an API-compatible wrapper for this library that keeps an on-disk cache of formatted code samples which will result in significantly faster formats when repeatedly formatting the same blocks of code.
 
+**Note 2**: this is a *Node.js-only* library and will *not* work in the browser, since Python is not available in the browser. For front-end highlighting, choose [a pure-JavaScript library](https://www.npmjs.com/search?q=syntax+highlighting).
+
 ## API
 
 **pygmentize(options, code, callback)**
